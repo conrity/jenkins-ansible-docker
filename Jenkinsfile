@@ -1,12 +1,8 @@
 pipeline {
     agent {
-    any {
-        label 'master'
-    }
-}
-
-    environment {
-    USER = "Artyom"
+      node {
+          label 'master'
+      }
     }
 
     stages {
@@ -22,6 +18,7 @@ pipeline {
                 cd ansible-playbooks/
                 pwd
                 ls -l
+                whoami
                 ansible-playbook -i hosts deploy-wordpress.yml 
                 """ 
                 }            
