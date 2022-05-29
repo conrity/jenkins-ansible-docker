@@ -1,0 +1,69 @@
+---
+ - hosts: Webserver
+
+   tasks:
+
+    - name: yum update
+      yum:
+        name: "*"
+        state: latest
+      become: true
+      become_user: root
+
+    - name: install yum-utils
+      yum: name=yum-utils state=installed
+      become: true
+
+    - name: add docker repo
+      shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+      become: true
+
+    - name: install docker
+      yum:
+        name: ['docker-ce', 'docker-ce-cli', 'containerd.io', 'docker-compose-plugin', 'python3', 'python3-pyyaml', 'python3-pip', 'make']
+        state: present
+        update_cache: True
+        disable_gpg_check: True  
+      become: true
+
+    - name: upgrade pip3
+      shell: pip3 install --upgrade pip
+      become: true
+
+    - name: install requirements 
+      shell: pip3 install docker-compose docker 
+      become: true
+
+    - name: start docker
+      service: name=docker state=started
+      become: true
+
+    - name: add group
+      shell: groupadd docker || true
+      become: true
+
+    - name: add user to docker group
+      shell: usermod -aG docker $USER 
+      become: true
+      
+    - name: Copy docker-compose
+      ansible.builtin.copy:
+        src: docker/
+        dest: docker/
+        mode: '0644'
+      become: true
+
+    - name: stop services
+      community.docker.docker_compose:
+        project_src: docker/
+        state: absent
+      become: true
+
+    - name: Create and start services
+      community.docker.docker_compose:
+        project_src: docker/
+      register: output
+      become: true
+
+    - ansible.builtin.debug:
+        var: output
